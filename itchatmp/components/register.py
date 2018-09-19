@@ -177,8 +177,10 @@ else:
             logger.warning('Reply is invalid: %s' % reply.get('errmsg'))
         return None, None
 
-def construct_handler(core, isWsgi):
+def construct_handler(core, isWsgi,getFunc=None):
     get_fn, post_fn = construct_get_post_fn(core)
+    if getFunc is not None:
+        get_fn = getFunc
     class BaseHandler(RequestHandler):
         def initialize(self):
             self.closed = False
@@ -247,14 +249,16 @@ def update_config(self, config=None, atStorage=None, userStorage=None,
     self.filterRequest = filterRequest or self.filterRequest
     self.threadPoolNumber = threadPoolNumber or self.threadPoolNumber
 
-def run(self, isWsgi=False, debug=True, port=80):
+def run(self, isWsgi=False, debug=True, port=80,getFunc=None):
     self.isWsgi = isWsgi
     self.debug = debug
     if debug:
         set_logging(loggingLevel=logging.DEBUG)
-    MainHandler = construct_handler(self, isWsgi)
+    MainHandler = construct_handler(self, isWsgi,getFunc)
+    
     app = tornado.web.Application(
         [('/', MainHandler)], debug=debug)
+    app.add_handlers
     logger.info('itchatmp started!%s' % (
         ' press Ctrl+C to exit.' if debug else ''))
     if isWsgi:
